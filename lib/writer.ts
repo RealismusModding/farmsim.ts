@@ -10,7 +10,7 @@ export class Writer extends Command {
             .action((...args) => this.run.apply(this, args));
     }
 
-    public run(message: string = "Hello World!", options: any[]): void {
+    public run(message: string = "Hello World!", options: any): void {
         console.log(message);
 
         if (options.output) {
