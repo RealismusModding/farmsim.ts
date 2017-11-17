@@ -1,6 +1,6 @@
-import { Command } from './command';
+import { Command } from '../command';
 
-export class Writer extends Command {
+export default class Writer extends Command {
 
     public install(): void {
         this.program
@@ -16,5 +16,7 @@ export class Writer extends Command {
         if (options.output) {
             console.log("OUTPUT");
         }
+
+        console.log(this.program.file);
     }
 }

@@ -1,7 +1,8 @@
 import * as commander from 'commander';
 import { Command } from './command';
 
-import { Writer } from './writer';
+import Writer from './commands/writer';
+import InitCommand from './commands/init';
 
 export class App {
 
@@ -15,12 +16,16 @@ export class App {
 
         // Add all commands
         this.commands = [
-            new Writer(this.program)
+            new Writer(this.program),
+            new InitCommand(this.program)
         ];
     }
 
     public initialize() {
-        this.program.version(this.package.version);
+        this.program
+            .version(this.package.version)
+            .option('-f, --file <path>', 'Path to modfile');
+            // .option('-q, --quiet', 'Only print error and warning messages; all other output will be suppressed.');
 
         this.commands.forEach((command) => {
             command.install()

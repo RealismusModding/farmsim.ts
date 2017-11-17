@@ -26,9 +26,9 @@
   "homepage": "https://github.com/RealismusModding/farmsim.ts#readme",
   "devDependencies": {
     "@types/chai": "^4.0.0",
-    "@types/chalk": "^2.2.0",
     "@types/commander": "^2.11.0",
     "@types/inquirer": "0.0.35",
+    "@types/js-yaml": "^3.10.0",
     "@types/mocha": "^2.2.39",
     "@types/node": "^8.0.53",
     "@types/sinon": "^4.0.0",
@@ -40,9 +40,9 @@
     "typescript": "^2.2.1"
   },
   "dependencies": {
-    "chalk": "^2.3.0",
     "clui": "^0.3.6",
     "commander": "^2.11.0",
-    "inquirer": "^4.0.0"
+    "inquirer": "^4.0.0",
+    "js-yaml": "^3.10.0"
   }
 }
