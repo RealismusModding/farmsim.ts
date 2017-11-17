@@ -1,8 +1,12 @@
 import * as commander from 'commander';
 import { Command } from './command';
 
-import Writer from './commands/writer';
 import InitCommand from './commands/init';
+import BuildCommand from './commands/build';
+import InstallCommand from './commands/install';
+import RunCommand from './commands/run';
+import LogCommand from './commands/log';
+import UninstallCommand from './commands/uninstall';
 
 export class App {
 
@@ -16,8 +20,12 @@ export class App {
 
         // Add all commands
         this.commands = [
-            new Writer(this.program),
-            new InitCommand(this.program)
+            new InitCommand(this.program),
+            new BuildCommand(this.program),
+            new InstallCommand(this.program),
+            new RunCommand(this.program),
+            new LogCommand(this.program),
+            new UninstallCommand(this.program)
         ];
     }
 
@@ -32,6 +40,10 @@ export class App {
         });
 
         this.program.parse(process.argv);
+
+        if (!process.argv.slice(2).length) {
+            this.program.outputHelp();
+        }
     }
 
 }
