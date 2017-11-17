@@ -1,0 +1,19 @@
+{
+  "name": "farmsim",
+  "version": "1.0.0",
+  "description": "Mod build and helper tool for Farming Simulator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RealismusModding/farmsim.ts.git"
+  },
+  "author": "Jos Kuijpers",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RealismusModding/farmsim.ts/issues"
+  },
+  "homepage": "https://github.com/RealismusModding/farmsim.ts#readme"
+}
