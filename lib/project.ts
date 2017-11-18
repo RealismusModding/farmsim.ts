@@ -1,6 +1,8 @@
 import * as commander from 'commander';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as _ from 'lodash';
 
 export default class Project {
     private data: any;
@@ -39,5 +41,23 @@ export default class Project {
         }
 
         return project;
+    }
+
+    public get(path: string, defaultValue?: any): any | null {
+        return _.get(this.data, path, defaultValue);
+    }
+
+    public has(path: string): boolean {
+        return _.has(this.data, path);
+    }
+
+    /**
+     * Get a filepath for a project file (file relative to project root).
+     *
+     * @param  {string} p Relative path
+     * @return {string}   Path
+     */
+    public filePath(p: string): string {
+        return path.join(path.dirname(this.path), p);
     }
 }

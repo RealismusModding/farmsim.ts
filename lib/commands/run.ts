@@ -96,22 +96,6 @@ export default class RunCommand extends Command {
         child_process.spawnSync(program, args, options);
     }
 
-    private parseXML(path: string): any | null {
-        const contents = fs.readFileSync(path, 'utf8');
-        let data = null;
-
-        xml2js.parseString(contents, (err, result) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-
-            data = result;
-        });
-
-        return data;
-    }
-
     private writeXML(path: string, data: any): boolean {
         let builder = new xml2js.Builder();
         let xml = builder.buildObject(data);

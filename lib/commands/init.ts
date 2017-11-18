@@ -41,3 +41,45 @@ export default class InitCommand extends Command {
          */
     }
 }
+
+/*
+
+console.log("moddesc", JSON.stringify(modDesc, null, 2))
+
+    // <extraSourceFiles>
+    //     <sourceFile filename="src/registerSpruceTrees.lua" />
+    // </extraSourceFiles>
+
+
+
+        const codePath = project.get('code');
+        if (codePath) {
+            console.log("Code path", codePath);
+        }
+
+        const main = project.get('main');
+        if (main) {
+            console.log("main", main);
+        }
+
+        if (project.get('translations')) {
+            _.set(modDesc, 'modDesc.l10n', [{
+                "$": {
+                    "filenamePrefix": "translations/translation"
+                }
+            }]);
+        }
+
+
+
+ */
+
+/*
+
+# .gitignore
+
+.fsbuild*
+*.zip
+.DS_Store
+
+ */

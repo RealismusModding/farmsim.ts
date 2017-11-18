@@ -1,6 +1,19 @@
 import Command from '../command';
+import Project from '../project';
+import BuildConfig from '../buildconfig';
+import System from '../system';
+
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import * as xml2js from 'xml2js';
+import * as _ from 'lodash';
 
 export default class BuildCommand extends Command {
+    private static LATEST_MODDESC_VER: number = 38;
+
+    private targetFolder: string | null;
+    public project: Project;
+    public config: BuildConfig;
 
     public install(): void {
         this.program
@@ -14,31 +27,140 @@ export default class BuildCommand extends Command {
     public run(options: any): void {
         console.log("Build mod");
 
-        /*
+        const project = Project.load(this.program);
+        if (!project) {
+            console.error("Not a farmsim project.");
+            return;
+        }
 
-        Note: put all of this in a separate lib, so it can be re-used by install too, and to
-        create variations of the build process.
+        this.project = project;
+        this.config = BuildConfig.load();
 
-        - Load project
-        - Load build config
+        this.build(options.release || options.update, options.update);
+    }
 
-        - Create temp folder
-        - Read modDesc, fill values, write modDesc
-        - Read source files, fill values, write source files
-        - Copy any resources (non-excluded+non-source files files)
+    public build(release: boolean, update: boolean): void {
+        // Catch all issues to not end up with gigabytes of failed builds
+        try {
+            // this.targetFolder = fs.mkdtempSync('.fsbuild-');
+            this.targetFolder = 'try';
+            if (!fs.existsSync(this.targetFolder)) {
+                fs.mkdirSync(this.targetFolder);
+            }
 
-        - Turn temp folder into a proper ZIP.
-        - Remove temp folder
+            this.generateModDesc();
+
+            let sourcePath = this.project.get('code');
+            if (sourcePath) {
+                sourcePath = this.project.filePath(sourcePath);
+
+                this.generateCode(sourcePath, release);
+            }
+
+            if (release) {
+console.log("Verify and clean translations");
+            }
+
+            const iconPath = this.project.filePath('icon.dds');
+            if (!fs.existsSync(iconPath)) {
+                console.error('Icon DDS is missing. Create an icon to continue the build.');
+                return;
+            } else {
+                this.copyResource('icon.dds');
+            }
+
+            this.project.get('resources', []).forEach((p: string) => this.copyResource(p));
+
+            this.createZipFile(update);
+        } finally {
+            // this.cleanUp();
+        }
+    }
+
+    private generateModDesc(): void {
+        const modDescPath = this.project.filePath('modDesc.xml');
+        let modDesc = this.parseXML(modDescPath);
+
+        _.set(modDesc, 'modDesc.$.descVersion', BuildCommand.LATEST_MODDESC_VER);
+        _.set(modDesc, 'modDesc.version', this.project.get('version', '0.0.0.0'));
+        _.set(modDesc, 'modDesc.author', this.project.get('author', _.get(modDesc, 'modDesc.author')));
+
+        if (this.targetFolder) {
+            this.writeXML(path.join(this.targetFolder, 'modDesc.xml'), modDesc);
+        }
+    }
+
+    private generateCode(sourcePath: string, release: boolean): void {
+        console.log("Template all files in", sourcePath);
+
+        //            - Read source files, fill values, write source files
+
+            /*
+
+            Note: If Release build:
+            - Disable local build config, only use from farmsim.yaml, and use its release data if available
+             */
+    }
+
+    private copyResource(sourcePath: string): void {
+        if (this.targetFolder) {
+            fs.copySync(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
+        }
+    }
+
+    private createZipFile(update: boolean): void {
+        let zipName = this.project.get('zip_name', this.project.get('name'));
+
+        if (update) {
+            zipName += '_update';
+        }
+
+        zipName += '.zip';
 
 
-        Note: If Release build:
-        - If specified in project.yml: Verify translations are not missing, throw warnings and remove empty translations
-        - Disable local build config, only use from farmsim.yaml, and use its release data if available
+        console.log("Make zipfile named", zipName);
+    }
 
-        If update build:
-        - Do release build
-        - Append zip name with _update
+    /**
+     * Clean up the build, especially in case of failure.
+     */
+    private cleanUp(): void {
+        if (this.targetFolder) {
+            fs.removeSync(this.targetFolder);
 
-         */
+            this.targetFolder = null;
+        }
+    }
+
+    private parseXML(path: string): any | null {
+        const contents = fs.readFileSync(path, 'utf8');
+        let data = null;
+
+        xml2js.parseString(contents, (err, result) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            data = result;
+        });
+
+        return data;
+    }
+
+    private writeXML(path: string, data: any): boolean {
+        let builder = new xml2js.Builder({
+            cdata: true,
+            renderOpts: {
+                pretty: true,
+                indent: '    '
+            }
+        });
+
+        let xml = builder.buildObject(data);
+
+        fs.writeFileSync(path, xml, { encoding: 'utf8' });
+
+        return true;
     }
 }
