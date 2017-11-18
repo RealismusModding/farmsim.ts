@@ -85,3 +85,10 @@ servers:
 ## Build
 
 Build creates a zipfile. In the end a lot of options shall be added but the basics is said in the build.ts file.
+
+## Verify
+
+- No .png files
+- Check if all .dds files are either DXT1 or DXT5
+- Check if the icon is not mipmapped
+- Descriptions for en, fr and de.
