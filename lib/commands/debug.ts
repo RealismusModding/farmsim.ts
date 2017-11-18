@@ -17,13 +17,12 @@ export default class DebugCommand extends Command {
     }
 
     public run(options: any): void {
-        // const project = Project.load(this.program);
-        // if (!project) {
-        //     return;
-        // }
-
-        // console.log(project.getData());
-
+        const project = Project.load(this.program);
+        if (project) {
+            console.log(project.getData());
+        } else {
+            console.log("No project found");
+        }
 
         console.log("User path", System.getUserDirectory());
         console.log("Game User path", System.getGameUserDirectory());
@@ -31,5 +30,12 @@ export default class DebugCommand extends Command {
         console.log("Mac", System.isMacOS());
 
         console.log(fs.readdirSync(System.getGameUserDirectory()));
+
+        const config = BuildConfig.load();
+        if (config) {
+            console.log(config.getData());
+        } else {
+            console.log("No config found");
+        }
     }
 }

@@ -10,7 +10,7 @@ export default class System {
      * @return {string} [description]
      */
     public static getUserDirectory(): string {
-        return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'] || "~/";
+        return process.env[System.isWindows() ? 'USERPROFILE' : 'HOME'] || "~/";
     }
 
     /**
