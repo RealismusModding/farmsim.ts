@@ -1,6 +1,6 @@
 import * as commander from 'commander';
 
-export abstract class Command {
+export default abstract class Command {
 
     constructor(protected program: commander.CommanderStatic) {
     }

@@ -1,4 +1,4 @@
-import { Command } from '../command';
+import Command from '../command';
 
 export default class RunCommand extends Command {
 

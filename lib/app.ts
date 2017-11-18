@@ -1,5 +1,6 @@
 import * as commander from 'commander';
-import { Command } from './command';
+
+import Command from './command';
 
 import InitCommand from './commands/init';
 import BuildCommand from './commands/build';

@@ -1,4 +1,7 @@
-import { Command } from '../command';
+import Command from '../command';
+import System from '../system';
+import * as path from 'path';
+import * as fs from 'fs';
 
 export default class LogCommand extends Command {
 
@@ -11,16 +14,13 @@ export default class LogCommand extends Command {
     }
 
     public run(options: any): void {
-        // Find the path of the log file
+        const logPath = path.resolve(System.getGameUserDirectory(), 'log.txt');
 
         if (options.path) {
-            console.log("write path of log file")
-
-            // Write the path
-        } else {
-            console.log("Read log file");
-
-            // Write the contents of the file
+            console.log(logPath);
+        } else if (fs.existsSync(logPath)) {
+            const logFile = fs.createReadStream(logPath);
+            logFile.pipe(process.stdout);
         }
     }
 }

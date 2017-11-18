@@ -29,7 +29,7 @@ export default class System {
             relative = "Documents/My Games/" + System.gameFolder
         }
 
-        return path.normalize(path.resolve(user, relative));
+        return path.normalize(path.resolve(user, relative)); //.replace(/ /g, '\\ ');
     }
 
     /**

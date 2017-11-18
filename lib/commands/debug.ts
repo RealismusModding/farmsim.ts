@@ -1,4 +1,4 @@
-import { Command } from '../command';
+import Command from '../command';
 
 import Project from '../project';
 import System from '../system';
