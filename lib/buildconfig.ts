@@ -26,7 +26,13 @@ export default class BuildConfig {
         let current = process.cwd();
         do {
             dirs.push(current);
-            current = path.dirname(current);
+            const newCurrent = path.dirname(current);
+
+            // Odd setups, to prevent infinite loop
+            if (newCurrent == current) {
+                break;
+            }
+            current = newCurrent;
         } while (current !== userPath);
 
         // Also look in user path
