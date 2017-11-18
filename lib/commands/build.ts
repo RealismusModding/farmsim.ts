@@ -32,10 +32,11 @@ export default class BuildCommand extends Command {
 
 
         Note: If Release build:
-        - Verify translations are not missing, throw warnings and remove empty translations
-        - Disable local build config, only use from farmsim.yaml
+        - If specified in project.yml: Verify translations are not missing, throw warnings and remove empty translations
+        - Disable local build config, only use from farmsim.yaml, and use its release data if available
 
         If update build:
+        - Do release build
         - Append zip name with _update
 
          */
