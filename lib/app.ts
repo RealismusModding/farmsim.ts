@@ -8,6 +8,8 @@ import RunCommand from './commands/run';
 import LogCommand from './commands/log';
 import UninstallCommand from './commands/uninstall';
 
+import DebugCommand from './commands/debug';
+
 export class App {
 
     private program: commander.CommanderStatic;
@@ -25,7 +27,8 @@ export class App {
             new InstallCommand(this.program),
             new RunCommand(this.program),
             new LogCommand(this.program),
-            new UninstallCommand(this.program)
+            new UninstallCommand(this.program),
+            new DebugCommand(this.program)
         ];
     }
 
