@@ -17,12 +17,12 @@ export default class DebugCommand extends Command {
     }
 
     public run(options: any): void {
-        const project = Project.load(this.program);
-        if (!project) {
-            return;
-        }
+        // const project = Project.load(this.program);
+        // if (!project) {
+        //     return;
+        // }
 
-        console.log(project.getData());
+        // console.log(project.getData());
 
 
         console.log("User path", System.getUserDirectory());
