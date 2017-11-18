@@ -1,9 +1,13 @@
 import * as commander from 'commander';
 
-export abstract class Command {
+interface CommandInterface {
+    install(): void;
+
+    run(): void;
+}
+
+export abstract class Command implements CommandInterface {
 
     constructor(protected program: commander.CommanderStatic) {
     }
-
-    public abstract install(): void;
 }
