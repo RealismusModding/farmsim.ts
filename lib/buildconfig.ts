@@ -6,6 +6,8 @@ import * as _ from 'lodash';
 
 import System from './system';
 
+let gBuildConfig: BuildConfig | null = null;
+
 export default class BuildConfig {
     private data: any;
 
@@ -18,6 +20,10 @@ export default class BuildConfig {
     }
 
     public static load(): BuildConfig {
+        if (gBuildConfig) {
+            return gBuildConfig;
+        }
+
         const fileName = ".fsbuild.yml";
         let dirs = [];
 
@@ -55,6 +61,16 @@ export default class BuildConfig {
             }
         });
 
-        return new BuildConfig(data);
+        gBuildConfig = new BuildConfig(data);
+
+        return gBuildConfig;
+    }
+
+    public get(path: string, defaultValue?: any): any | null {
+        return _.get(this.data, path, defaultValue);
+    }
+
+    public has(path: string): boolean {
+        return _.has(this.data, path);
     }
 }

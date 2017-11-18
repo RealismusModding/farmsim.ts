@@ -33,6 +33,7 @@
     "@types/mocha": "^2.2.39",
     "@types/node": "^8.0.53",
     "@types/sinon": "^4.0.0",
+    "@types/xml2js": "^0.4.2",
     "chai": "^4.0.1",
     "mocha": "^4.0.1",
     "rimraf": "^2.6.1",
@@ -45,6 +46,7 @@
     "commander": "^2.11.0",
     "inquirer": "^4.0.0",
     "js-yaml": "^3.10.0",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.4",
+    "xml2js": "^0.4.19"
   }
 }

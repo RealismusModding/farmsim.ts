@@ -62,24 +62,31 @@ This file is not committed to SCM, and contains parameters for the tool, like cu
 The normal file is in ~/ (user directory), and options are overwritten by the file next to the farmsim.yml (`_.merge()`). When building with --release, the data is not overridden but only default template data is used.
 
 ```yaml
+fs_folder: /Users/joskuijpers/Library/Application Support/FarmingSimulator2017
+
 templates:
   debug: true
   verbose: true
 
 servers:
-  - name: dedi
-    host: 123.123.123.123
-    port: 1234 # has default value too, which is standard FS port
-    admin_user:
-    admin_pass:
-    # whatever is needed
-    ftp: #either ftp or path access for local dedi
-      host:
-      port:
-      path:
-      username:
-      password:
-    path: ""
+  verygames:
+    host: "123.124.123.143"
+    port: 4242
+    username: user
+    password: pass
+
+    ftp:
+        host: ftp-3.verygames.net
+        path: games/FarmingSimulator17/mods/
+        user: 1111-user
+        password: password
+
+    game:
+        name: My Server
+        admin_password: Admin
+        password: Admin
+        savegame: 1
+        mapStart: default_Map01
 ```
 
 ## Build

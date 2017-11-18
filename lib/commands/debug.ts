@@ -4,8 +4,6 @@ import Project from '../project';
 import System from '../system';
 import BuildConfig from '../buildconfig';
 
-import * as fs from 'fs';
-
 export default class DebugCommand extends Command {
 
     public install(): void {
@@ -29,13 +27,14 @@ export default class DebugCommand extends Command {
         console.log("Windows", System.isWindows());
         console.log("Mac", System.isMacOS());
 
-        console.log(fs.readdirSync(System.getGameUserDirectory()));
-
         const config = BuildConfig.load();
         if (config) {
             console.log(config.getData());
         } else {
             console.log("No config found");
         }
+
+        console.log("install", System.getDefaultInstallationPath())
+        console.log("installations", System.getInstallationPaths())
     }
 }

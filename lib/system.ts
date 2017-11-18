@@ -1,8 +1,13 @@
 import * as os from 'os';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+
+import BuildConfig from './buildconfig';
 
 export default class System {
     private static gameFolder: string = "FarmingSimulator2017";
+    private static gameName: string = "Farming Simulator 2017";
 
     /**
      * Get user directory full path
@@ -23,7 +28,10 @@ export default class System {
         let relative = '';
 
         if (System.isMacOS()) {
-            relative = "Library/Application Support/" + System.gameFolder;
+            relative = "Library/Containers/com.astragon.farmingsim17/Data/Library/Application Support/" + System.gameFolder
+            if (!fs.existsSync(path.resolve(user, relative))) {
+                relative = "Library/Application Support/" + System.gameFolder;
+            }
         } else {
             relative = "Documents/My Games/" + System.gameFolder
         }
@@ -47,5 +55,77 @@ export default class System {
      */
     public static isWindows(): boolean {
         return os.type() == 'Windows_NT';
+    }
+
+    /**
+     * Get the default, topmost installation path.
+     *
+     * @return {string} path or null if no installation found
+     */
+    public static getDefaultInstallationPath(): string | null {
+        const paths = System.getInstallationPaths();
+
+        if (paths.length > 0) {
+            return paths[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get all found and configured installation paths.
+     *
+     * Searches for normal installations, Mac App Store and Steam installations.
+     * Also adds existing configured installations.
+     *
+     * @return {string[]} List of FS installation paths
+     */
+    public static getInstallationPaths(): string[] {
+        let paths: string[] = [];
+
+        if (System.isMacOS()) {
+            // normal / app store
+            paths.push(`/Applications/${System.gameName}.app`)
+
+            // Steam
+            paths.push(path.resolve(System.getUserDirectory(), `~/Library/Application Support/Steam/steamapps/common/${System.gameName}/${System.gameName}.app`))
+        } else {
+            // normal
+            paths.push(`C://Program Files (x86)/${System.gameName}/${System.gameFolder}.exe`)
+            paths.push(`C://Program Files/${System.gameName}/${System.gameFolder}.exe`)
+
+            // steam
+            paths.push(`C:/Program Files (x86)/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`)
+            paths.push(`C:/Program Files/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`)
+        }
+
+        // Add intallations
+        const config = BuildConfig.load();
+
+        paths = paths.concat(_.values(config.get('installations')));
+
+        return paths.filter((filePath) => fs.existsSync(filePath));
+    }
+
+    public static getInstallationType(path: string): string {
+        path = path.toLowerCase();
+
+        // If has 'steam'
+        if (path.indexOf('steamapps') !== -1) {
+            return 'steam';
+        }
+
+        // If Mac App Store app
+        // TODO
+        // if (false) {
+        //     return 'appstore';
+        // }
+
+        // If has .app
+        if (path.endsWith('.app')) {
+            return 'app';
+        }
+
+        return 'exe';
     }
 }
