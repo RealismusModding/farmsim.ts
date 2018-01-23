@@ -2,7 +2,7 @@
   "name": "farmsim",
   "version": "1.0.0",
   "description": "Mod build and helper tool for Farming Simulator",
-  "main": "index.js",
+  "main": "bin/fs",
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && tsc --pretty",
@@ -23,8 +23,12 @@
     "bin",
     "dist"
   ],
+  "bin": {
+    "fs": "./bin/fs"
+  },
   "homepage": "https://github.com/RealismusModding/farmsim.ts#readme",
   "devDependencies": {
+    "@types/bluebird": "^3.5.19",
     "@types/chai": "^4.0.0",
     "@types/commander": "^2.11.0",
     "@types/fs-extra": "^4.0.5",
@@ -35,6 +39,7 @@
     "@types/node": "^8.0.53",
     "@types/rimraf": "^2.0.2",
     "@types/sinon": "^4.0.0",
+    "@types/winston": "^2.3.7",
     "@types/xml2js": "^0.4.2",
     "chai": "^4.0.1",
     "mocha": "^4.0.1",
@@ -44,13 +49,15 @@
     "typescript": "^2.2.1"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "clui": "^0.3.6",
     "commander": "^2.11.0",
     "fs-extra": "^4.0.2",
     "inquirer": "^4.0.0",
     "js-yaml": "^3.10.0",
-    "replacestream": "^4.0.3",
     "lodash": "^4.17.4",
+    "replacestream": "^4.0.3",
+    "winston": "^2.4.0",
     "xml2js": "^0.4.19",
     "yazl": "^2.4.3"
   }

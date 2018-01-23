@@ -1,4 +1,5 @@
 import * as commander from 'commander';
+import logger = require('winston');
 
 import Command from './command';
 
@@ -34,6 +35,12 @@ export class App {
     }
 
     public initialize() {
+        logger.remove(logger.transports.Console)
+        logger.add(logger.transports.Console, {
+            colorize: true
+        })
+        logger.level = 'debug'
+
         this.program
             .version(this.package.version)
             .option('-f, --file <path>', 'Path to modfile')

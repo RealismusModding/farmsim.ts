@@ -3,6 +3,8 @@ import Project from '../project';
 import BuildConfig from '../buildconfig';
 import System from '../system';
 
+import * as logger from 'winston'
+
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as xml2js from 'xml2js';
@@ -27,18 +29,18 @@ export default class BuildCommand extends Command {
     }
 
     public run(options: any): void {
-        console.log("Build mod");
-
         const project = Project.load(this.program);
         if (!project) {
-            console.error("Not a farmsim project.");
+            logger.error("Not a farmsim project.");
             return;
         }
+
+        logger.debug("Building mod '" + project.get("name") + "'");
 
         this.project = project;
         this.config = BuildConfig.load();
 
-        this.build(options.release || options.update, options.update);
+        return this.build(options.release || options.update, options.update);
     }
 
     public build(release: boolean, update: boolean): void {
@@ -52,18 +54,18 @@ export default class BuildCommand extends Command {
             if (sourcePath) {
                 sourcePath = this.project.filePath(sourcePath);
 
-                this.generateCode(sourcePath, release);
+                // this.generateCode(sourcePath, release);
             }
 
             if (release) {
-console.log("Verify and clean translations");
+logger.debug("Verify and clean translations");
             }
 
             const iconPath = this.project.filePath('icon.dds');
             if (fs.existsSync(iconPath)) {
                 this.copyResource('icon.dds');
             } else {
-                console.error('Icon DDS is missing. Create an icon to continue the build.');
+                logger.error('Icon DDS is missing. Create an icon to continue the build.');
                 return;
             }
 
@@ -75,7 +77,7 @@ console.log("Verify and clean translations");
 
             this.createZipFile(update);
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             this.cleanUp();
         }
     }
@@ -90,7 +92,7 @@ console.log("Verify and clean translations");
 
         this.writeXML(path.join(this.targetFolder, 'modDesc.xml'), modDesc);
     }
-
+/*
     private generateCode(sourcePath: string, release: boolean): void {
         // Create the template values
         let templates = this.project.get('templates', {});
@@ -138,6 +140,7 @@ console.log("Verify and clean translations");
 
         folder(sourcePath, target);
     }
+*/
 
     private copyResource(sourcePath: string): void {
         fs.copySync(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
@@ -158,6 +161,7 @@ console.log("Verify and clean translations");
 
         var zipfile = new yazl.ZipFile();
 
+        // Recursively copying folders
         const folder = (src: string, dst: string) => {
             fs.readdirSync(src).forEach((item) => {
                 const itemSrc = path.join(src, item);
@@ -192,7 +196,7 @@ console.log("Verify and clean translations");
      */
     private cleanUp(): void {
         if (fs.existsSync(this.targetFolder)) {
-            console.log("REMOVE");
+            logger.debug("Removing build folder");
             fs.removeSync(this.targetFolder);
         }
     }
@@ -203,7 +207,7 @@ console.log("Verify and clean translations");
 
         xml2js.parseString(contents, (err, result) => {
             if (err) {
-                console.error(err);
+                logger.error(err);
                 return;
             }
 
