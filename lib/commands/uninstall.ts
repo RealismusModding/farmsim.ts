@@ -1,4 +1,5 @@
 import Command from '../command';
+import Utils from '../utils';
 
 export default class UninstallCommand extends Command {
 
@@ -7,10 +8,10 @@ export default class UninstallCommand extends Command {
             .command('uninstall')
             .description('Remove mod from mods folder')
             .option('-f, --force', 'Do not ask for confirmation.')
-            .action((...args) => this.run.apply(this, args));
+            .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public run(options: any): void {
+    public async run(options: any): Promise<void> {
         console.log("Remove mod");
 
         /*

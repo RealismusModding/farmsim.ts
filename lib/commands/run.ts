@@ -1,5 +1,6 @@
 import Command from '../command';
 import System from '../system';
+import Utils from '../utils';
 
 import * as child_process from 'child_process';
 import * as fs from 'fs';
@@ -17,10 +18,10 @@ export default class RunCommand extends Command {
             // .option('-i, --installation <name>', 'Start a specific configured installation.')
             .option('-w, --warnings', 'Enable development warnings.')
             .option('-c, --no-cheats', 'Disable cheats.')
-            .action((...args) => this.run.apply(this, args));
+            .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public run(options: any): void {
+    public async run(options: any): Promise<void> {
         const installation = System.getDefaultInstallationPath();
         if (!installation) {
             console.error("No Farming Simulator installation found.");

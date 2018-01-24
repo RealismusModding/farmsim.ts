@@ -33,16 +33,13 @@ export default class BuildCommand extends Command {
 
     public async run(options: any): Promise<void> {
         const project = await Project.load(this.program);
-        if (!project) {
-            throw 'Not a farmsim project.';
-        }
 
         logger.info("Building mod '" + project.get("name") + "'");
 
         this.project = project;
         this.config = BuildConfig.load();
 
-        return this.build(options.release || options.update, options.update).then(() => {});
+        return this.build(options.release || options.update, options.update)
     }
 
     public async build(release: boolean, update: boolean): Promise<void> {
@@ -79,7 +76,7 @@ logger.debug("Verify and clean translations");
             // Copy any resources referenced in the project
             await Promise.all(this.project.get('resources', []).map((p: string) => this.copyResource(p)));
 
-            const zipName = this.makeZipName(update);
+            const zipName = this.project.zipName(update);
             await this.createZipFile(zipName);
         } finally {
             await this.cleanUp();
@@ -170,18 +167,6 @@ logger.debug("Verify and clean translations");
      */
     private async copyResource(sourcePath: string): Promise<void> {
         return Utils.copy(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
-    }
-
-    private makeZipName(update: boolean): string {
-        let zipName = this.project.get('zip_name', this.project.get('name'));
-
-        if (update) {
-            zipName += '_update';
-        }
-
-        zipName += '.zip';
-
-        return zipName;
     }
 
     /**

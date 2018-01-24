@@ -58,4 +58,18 @@ export default class Project {
     public filePath(p: string): string {
         return path.join(path.dirname(this.path), p);
     }
+
+    public zipName(update?: boolean): string {
+        update = update || false;
+
+        let zipName = this.get('zip_name', this.get('name'));
+
+        if (update) {
+            zipName += '_update';
+        }
+
+        zipName += '.zip';
+
+        return zipName;
+    }
 }

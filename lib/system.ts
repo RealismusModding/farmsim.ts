@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as _ from 'lodash';
+import { exec } from 'child_process';
 
 import BuildConfig from './buildconfig';
 
@@ -127,5 +128,17 @@ export default class System {
         }
 
         return 'exe';
+    }
+
+    public static openFileInEditor(path: string) {
+        exec(System.getCommandLine() + ' "' + path + '"');
+    }
+
+    public static getCommandLine(): string {
+        switch (process.platform) {
+            case 'darwin': return 'open';
+            case 'win32': return 'start';
+            default: return 'xdg-open';
+        }
     }
 }
