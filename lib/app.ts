@@ -44,7 +44,7 @@ export class App {
 
         this.program
             .version(this.package.version)
-            .option('-f, --file <path>', 'Path to modfile')
+            .option('--file <path>', 'Path to modfile')
             .option('-q, --quiet', 'Only print error and warning messages; all other output will be suppressed.');
 
         this.commands.forEach((command) => {

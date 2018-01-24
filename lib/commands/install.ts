@@ -45,7 +45,7 @@ export default class InstallCommand extends Command {
         }
 
         // Find mods folder
-        let fsFolder = this.config.get('fs_folder', System.getGameUserDirectory());
+        const fsFolder = this.config.get('fs_folder', System.getGameUserDirectory());
         const modsFolder = path.join(fsFolder, '/mods/');
 
         // Copy the file
