@@ -4,14 +4,16 @@ import BuildConfig from '../buildconfig';
 import System from '../system';
 import Utils from '../utils';
 
-import * as logger from 'winston';
-
-import * as fs from 'fs-extra';
+import * as fs from 'fs';
 import * as path from 'path';
+import * as util from 'util';
+
+import * as logger from 'winston';
 import * as xml2js from 'xml2js';
 import * as _ from 'lodash';
 import * as yazl from 'yazl';
 import * as replaceStream from 'replacestream';
+import * as xmlpoke from 'xmlpoke';
 
 export default class BuildCommand extends Command {
     private static LATEST_MODDESC_VER: number = 38;
@@ -30,13 +32,12 @@ export default class BuildCommand extends Command {
     }
 
     public async run(options: any): Promise<void> {
-        const project = Project.load(this.program);
+        const project = await Project.load(this.program);
         if (!project) {
-            logger.error("Not a farmsim project.");
-            return;
+            throw 'Not a farmsim project.';
         }
 
-        logger.debug("Building mod '" + project.get("name") + "'");
+        logger.info("Building mod '" + project.get("name") + "'");
 
         this.project = project;
         this.config = BuildConfig.load();
@@ -49,49 +50,63 @@ export default class BuildCommand extends Command {
         try {
             this.targetFolder = fs.mkdtempSync('.fsbuild-');
 
-            this.generateModDesc();
+            await this.generateModDesc();
 
             let sourcePath = this.project.get('scripts');
             if (sourcePath) {
                 sourcePath = this.project.filePath(sourcePath);
 
-                // this.generateCode(sourcePath, release);
+                // await this.generateCode(sourcePath, release);
             }
 
             if (release) {
 logger.debug("Verify and clean translations");
             }
 
+            // A mod requires an icon, copy it or fail.
             const iconPath = this.project.filePath('icon.dds');
             if (fs.existsSync(iconPath)) {
-                this.copyResource('icon.dds');
+                await this.copyResource('icon.dds');
             } else {
-                return Promise.reject('Icon DDS is missing. Create an icon to continue the build.');
+                throw 'Icon DDS is missing. Create an icon to continue the build.';
             }
 
+            // If there are translations, copy them
             if (this.project.get('translations')) {
-                this.copyResource('translations/');
+                await this.copyResource('translations/');
             }
 
-            this.project.get('resources', []).forEach((p: string) => this.copyResource(p));
+            // Copy any resources referenced in the project
+            await Promise.all(this.project.get('resources', []).map((p: string) => this.copyResource(p)));
 
-            this.createZipFile(update);
-        } catch (e) {
-            this.cleanUp();
-
-            return Promise.reject(e);
+            const zipName = this.makeZipName(update);
+            await this.createZipFile(zipName);
+        } finally {
+            await this.cleanUp();
         }
     }
 
-    private generateModDesc(): void {
-        const modDescPath = this.project.filePath('modDesc.xml');
-        let modDesc = this.parseXML(modDescPath);
+    private async generateModDesc(): Promise<void> {
+        const src = this.project.filePath('modDesc.xml');
+        const dst = path.join(this.targetFolder, 'modDesc.xml');
 
-        _.set(modDesc, 'modDesc.$.descVersion', BuildCommand.LATEST_MODDESC_VER);
-        _.set(modDesc, 'modDesc.version', this.project.get('version', '0.0.0.0'));
-        _.set(modDesc, 'modDesc.author', this.project.get('author', _.get(modDesc, 'modDesc.author')));
+        const modDesc = this.parseXML(src);
 
-        this.writeXML(path.join(this.targetFolder, 'modDesc.xml'), modDesc);
+        // Copy the file
+        await Utils.copy(src, dst);
+
+        // Modify destination
+        xmlpoke(dst, xml => {
+            xml.setOrAdd('modDesc/@descVersion', BuildCommand.LATEST_MODDESC_VER);
+            xml.setOrAdd('modDesc/version', this.project.get('version', '0.0.0.0'));
+
+            xml.setOrAdd('modDesc/author', this.project.get('author', _.get(modDesc, 'modDesc.author')));
+
+            const contributors = this.project.get('contributors', []);
+            if (contributors.length > 0) {
+                xml.setOrAdd('modDesc/contributors', contributors.join(", "));
+            }
+        });
     }
 
 /*
@@ -147,15 +162,17 @@ logger.debug("Verify and clean translations");
     }
     */
 
-    private copyResource(sourcePath: string): void {
-        fs.copySync(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
+    /**
+     * Copy a resource or folder 1-to-1, recursively, to the build folder
+     *
+     * @param  {string}        sourcePath path
+     * @return {Promise<void>}
+     */
+    private async copyResource(sourcePath: string): Promise<void> {
+        return Utils.copy(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
     }
 
-    private createZipFile(update: boolean): void {
-        if (!this.targetFolder) {
-            return;
-        }
-
+    private makeZipName(update: boolean): string {
         let zipName = this.project.get('zip_name', this.project.get('name'));
 
         if (update) {
@@ -164,48 +181,65 @@ logger.debug("Verify and clean translations");
 
         zipName += '.zip';
 
-        var zipfile = new yazl.ZipFile();
+        return zipName;
+    }
+
+    /**
+     * Create zip-file using the build destination folder
+     * @param  {boolean}       update Is an update
+     * @return {Promise<void>}
+     */
+    private async createZipFile(zipName: string): Promise<void> {
+        if (!this.targetFolder) {
+            return;
+        }
+
+        let zip = new yazl.ZipFile();
 
         // Recursively copying folders
-        const folder = (src: string, dst: string) => {
-            fs.readdirSync(src).forEach((item) => {
-                const itemSrc = path.join(src, item);
-                const itemDst = path.join(dst, item);
+        const folder = (src: string, dst: string) => fs.readdirSync(src).forEach(item => {
+            const itemSrc = path.join(src, item);
+            const itemDst = path.join(dst, item);
 
-                // console.log("- ", itemSrc, '=>', itemDst);
+            const stats = fs.statSync(itemSrc);
 
-                const stats = fs.statSync(itemSrc);
-                if (stats.isFile()) {
-                    zipfile.addFile(itemSrc, itemDst);
+            if (stats.isFile()) {
+                zip.addFile(itemSrc, itemDst);
+            } else if (stats.isDirectory()) {
+                zip.addEmptyDirectory(itemDst);
 
-                } else if (stats.isDirectory()) {
-                    zipfile.addEmptyDirectory(itemDst);
-
-                    folder(itemSrc, itemDst);
-                }
-            });
-        }
+                folder(itemSrc, itemDst);
+            }
+        });
 
         folder(this.targetFolder, '.');
 
         // This has to be async
-        zipfile.outputStream
-            .pipe(fs.createWriteStream(zipName))
-            .on("close", () => this.cleanUp());
+        return new Promise<void>((resolve, reject) => {
+            zip.outputStream
+                .pipe(fs.createWriteStream(zipName))
+                .on("close", resolve);
 
-        zipfile.end();
+            zip.end();
+        });
     }
 
     /**
      * Clean up the build, especially in case of failure.
      */
-    private cleanUp(): void {
+    private async cleanUp(): Promise<void> {
         if (fs.existsSync(this.targetFolder)) {
             logger.debug("Removing build folder");
-            fs.removeSync(this.targetFolder);
+            return Utils.removeFolder(this.targetFolder);
         }
     }
 
+    /**
+     * Parse an XML file into a JavaScript object.
+     *
+     * @param  {string} path Path of the file
+     * @return {any}         Javascript object or null
+     */
     private parseXML(path: string): any | null {
         const contents = fs.readFileSync(path, 'utf8');
         let data = null;
@@ -222,7 +256,16 @@ logger.debug("Verify and clean translations");
         return data;
     }
 
-    private writeXML(path: string, data: any): boolean {
+    /**
+     * Write XML from a JavaScript object.
+     *
+     * Note: do not use when the output needs forced CDATA.
+     *
+     * @param  {string}  path Path of the file
+     * @param  {any}     data Object
+     * @return {boolean}      true on success, false on failure
+     */
+    private async writeXML(path: string, data: any): Promise<void> {
         let builder = new xml2js.Builder({
             cdata: true,
             renderOpts: {
@@ -233,8 +276,7 @@ logger.debug("Verify and clean translations");
 
         let xml = builder.buildObject(data);
 
-        fs.writeFileSync(path, xml, { encoding: 'utf8' });
-
-        return true;
+        const writeFile = util.promisify(fs.writeFile);
+        return writeFile(path, xml, { encoding: 'utf8' });
     }
 }

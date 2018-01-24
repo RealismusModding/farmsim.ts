@@ -1,5 +1,5 @@
 import Command from '../command';
-
+import Utils from '../utils';
 import Project from '../project';
 import System from '../system';
 import BuildConfig from '../buildconfig';
@@ -11,11 +11,11 @@ export default class DebugCommand extends Command {
             .command('debug')
             .description('Do debug stuff')
             // .option('-p, --path', 'Only get the path')
-            .action((...args) => this.run.apply(this, args));
+            .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public run(options: any): void {
-        const project = Project.load(this.program);
+    public async run(options: any): Promise<void> {
+        const project = await Project.load(this.program);
         if (project) {
             console.log(project.getData());
         } else {

@@ -19,7 +19,7 @@ export default class Project {
         return this.data;
     }
 
-    public static load(program: commander.CommanderStatic): Project | null {
+    public static async load(program: commander.CommanderStatic): Promise<Project> {
         // Find current project file
         let file = program.file;
         if (!file) {
@@ -27,8 +27,7 @@ export default class Project {
         }
 
         if (!fs.existsSync(file)) {
-            console.error("Could not find project file '" + file + "'");
-            return null;
+            throw "Could not find project file '" + file + "'";
         }
 
         const project = new Project(file);
@@ -36,8 +35,7 @@ export default class Project {
         try {
             project.load();
         } catch (e) {
-            console.error("Failed to load project file '" + file + "':", e.message);
-            return null;
+            throw "Failed to load project file '" + file + "': " +  e.message;
         }
 
         return project;
