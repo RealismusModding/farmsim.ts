@@ -2,8 +2,9 @@ import Command from '../command';
 import Project from '../project';
 import BuildConfig from '../buildconfig';
 import System from '../system';
+import Utils from '../utils';
 
-import * as logger from 'winston'
+import * as logger from 'winston';
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
@@ -25,10 +26,10 @@ export default class BuildCommand extends Command {
             .description('Build the mod')
             .option('-r, --release', 'Create a release build')
             .option('-u, --update', 'Create an update build')
-            .action((...args) => this.run.apply(this, args));
+            .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public run(options: any): void {
+    public async run(options: any): Promise<void> {
         const project = Project.load(this.program);
         if (!project) {
             logger.error("Not a farmsim project.");
@@ -40,10 +41,10 @@ export default class BuildCommand extends Command {
         this.project = project;
         this.config = BuildConfig.load();
 
-        return this.build(options.release || options.update, options.update);
+        return this.build(options.release || options.update, options.update).then(() => {});
     }
 
-    public build(release: boolean, update: boolean): void {
+    public async build(release: boolean, update: boolean): Promise<void> {
         // Catch all issues to not end up with gigabytes of failed builds
         try {
             this.targetFolder = fs.mkdtempSync('.fsbuild-');
@@ -65,8 +66,7 @@ logger.debug("Verify and clean translations");
             if (fs.existsSync(iconPath)) {
                 this.copyResource('icon.dds');
             } else {
-                logger.error('Icon DDS is missing. Create an icon to continue the build.');
-                return;
+                return Promise.reject('Icon DDS is missing. Create an icon to continue the build.');
             }
 
             if (this.project.get('translations')) {
@@ -77,8 +77,9 @@ logger.debug("Verify and clean translations");
 
             this.createZipFile(update);
         } catch (e) {
-            logger.error(e);
             this.cleanUp();
+
+            return Promise.reject(e);
         }
     }
 
@@ -92,8 +93,9 @@ logger.debug("Verify and clean translations");
 
         this.writeXML(path.join(this.targetFolder, 'modDesc.xml'), modDesc);
     }
+
 /*
-    private generateCode(sourcePath: string, release: boolean): void {
+    private async generateCode(sourcePath: string, release: boolean): Promise<void> {
         // Create the template values
         let templates = this.project.get('templates', {});
 
@@ -121,11 +123,14 @@ logger.debug("Verify and clean translations");
                     // ISSUE: THIS IS ASYNC, REST IS SYNC
                     let stream = fs.createReadStream(itemSrc);
 
+                    // TODO: do not hardcode a template
                     _.forEach(templates, (value, key) => {
                         stream = stream.pipe(replaceStream(/([a-zA-Z0-9]+) \-\-<%=debug %>/g, '1'))
                     });
 
-                    stream.pipe(fs.createWriteStream(itemDst)).on('finish', resolve);
+                    stream
+                        .pipe(fs.createWriteStream(itemDst))
+                        .on('finish', resolve);
 
                 } else if (stats.isDirectory()) {
                     fs.mkdirSync(itemDst);
@@ -140,7 +145,7 @@ logger.debug("Verify and clean translations");
 
         folder(sourcePath, target);
     }
-*/
+    */
 
     private copyResource(sourcePath: string): void {
         fs.copySync(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
