@@ -49,11 +49,9 @@ export default class BuildCommand extends Command {
 
             await this.generateModDesc();
 
-            let sourcePath = this.project.get('scripts');
+            const sourcePath = this.project.get('code');
             if (sourcePath) {
-                sourcePath = this.project.filePath(sourcePath);
-
-                // await this.generateCode(sourcePath, release);
+                await this.generateCode(this.project.filePath(sourcePath), release);
             }
 
             if (release) {
@@ -97,7 +95,7 @@ logger.debug("Verify and clean translations");
             xml.setOrAdd('modDesc/@descVersion', BuildCommand.LATEST_MODDESC_VER);
             xml.setOrAdd('modDesc/version', this.project.get('version', '0.0.0.0'));
 
-            xml.setOrAdd('modDesc/author', this.project.get('author', _.get(modDesc, 'modDesc.author')));
+            xml.setOrAdd('modDesc/author', this.project.get('author', _.get(modDesc, 'modDesc.author.0')));
 
             const contributors = this.project.get('contributors', []);
             if (contributors.length > 0) {
@@ -106,7 +104,6 @@ logger.debug("Verify and clean translations");
         });
     }
 
-/*
     private async generateCode(sourcePath: string, release: boolean): Promise<void> {
         // Create the template values
         let templates = this.project.get('templates', {});
@@ -119,45 +116,51 @@ logger.debug("Verify and clean translations");
             templates = _.defaults(this.config.get('templates', {}), templates);
         }
 
-        const folder = (src: string, dst: string) => {
-            fs.readdirSync(src).forEach((item) => {
+        const readdir = util.promisify(fs.readdir);
+        const copy = util.promisify(fs.copyFile);
+        const stat = util.promisify(fs.stat);
+        const mkdir = util.promisify(fs.mkdir);
+
+        const folder = async (src: string, dst: string): Promise<void> => {
+            const items = await readdir(src);
+
+            return Promise.all(items.map(async (item) => {
                 const itemSrc = path.join(src, item);
                 const itemDst = path.join(dst, item);
 
-                console.log("+ ", itemSrc, '=>', itemDst);
-
-                const stats = fs.statSync(itemSrc);
+                const stats = await stat(itemSrc);
                 if (stats.isFile()) {
-                    console.log("file");
-
-                    // fs.copySync(itemSrc, itemDst);
-
-                    // ISSUE: THIS IS ASYNC, REST IS SYNC
+                    // Read from source
                     let stream = fs.createReadStream(itemSrc);
 
-                    // TODO: do not hardcode a template
+                    // For each template, add a transformer pipe
                     _.forEach(templates, (value, key) => {
-                        stream = stream.pipe(replaceStream(/([a-zA-Z0-9]+) \-\-<%=debug %>/g, '1'))
+                        const regex = "([a-zA-Z0-9]+) \-\-<%=" + key + " %>";
+                        const re = new RegExp(regex, "g");
+
+                        stream = stream.pipe(replaceStream(re, value.toString()));
                     });
 
-                    stream
-                        .pipe(fs.createWriteStream(itemDst))
-                        .on('finish', resolve);
-
+                    // Write to destination
+                    return new Promise((resolve, reject) => {
+                        stream
+                            .pipe(fs.createWriteStream(itemDst))
+                            .on('finish', resolve)
+                            .on('error', reject);
+                    });
                 } else if (stats.isDirectory()) {
-                    fs.mkdirSync(itemDst);
+                    await mkdir(itemDst);
 
-                    folder(itemSrc, itemDst);
+                    // Recursively handle the folder
+                    return folder(itemSrc, itemDst);
                 }
-            });
-        }
+            })).then(() => {});
+        };
 
         const target = path.join(this.targetFolder, sourcePath);
-        fs.mkdirSync(target)
-
-        folder(sourcePath, target);
+        return util.promisify(fs.mkdir)(target)
+            .then(() => folder(sourcePath, target));
     }
-    */
 
     /**
      * Copy a resource or folder 1-to-1, recursively, to the build folder
@@ -203,7 +206,8 @@ logger.debug("Verify and clean translations");
         return new Promise<void>((resolve, reject) => {
             zip.outputStream
                 .pipe(fs.createWriteStream(zipName))
-                .on("close", resolve);
+                .on('close', resolve)
+                .on('error', reject);
 
             zip.end();
         });

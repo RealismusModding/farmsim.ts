@@ -7,6 +7,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as xml2js from 'xml2js';
 import * as _ from 'lodash';
+import * as logger from 'winston';
+import * as util from 'util';
 
 export default class RunCommand extends Command {
 
@@ -24,18 +26,17 @@ export default class RunCommand extends Command {
     public async run(options: any): Promise<void> {
         const installation = System.getDefaultInstallationPath();
         if (!installation) {
-            console.error("No Farming Simulator installation found.");
-            return;
+            throw "No Farming Simulator installation found.";
         }
-        console.log(`Found installation at ${installation}.`)
+
+        logger.info(`Found installation at ${installation}.`)
 
         const type = System.getInstallationType(installation);
 
         if (type === 'app') {
             const launchXMLPath = path.resolve(installation, 'Contents', 'Resources', 'launch.xml');
             if (!fs.existsSync(launchXMLPath)) {
-                console.error("Installation is corrupt: can't find launch.xml.");
-                return;
+                throw "Installation is corrupt: can't find launch.xml.";
             }
 
             const args = this.createLaunchArgs(options);
@@ -48,7 +49,6 @@ export default class RunCommand extends Command {
             this.writeXML(launchXMLPath, launchData);
 
             this.launch(installation);
-
         } else if (type === 'exe') {
             const args = this.createLaunchArgs(options);
 
@@ -78,7 +78,6 @@ export default class RunCommand extends Command {
 
     private launch(path: string, extraArgs?: string[]): void {
         const options = {
-            encoding: 'utf8',
         };
 
         let args: string[] = [];
@@ -94,7 +93,7 @@ export default class RunCommand extends Command {
 
         args = args.concat(extraArgs || []);
 
-        child_process.spawnSync(program, args, options);
+        child_process.spawn(program, args);
     }
 
     private writeXML(path: string, data: any): boolean {
