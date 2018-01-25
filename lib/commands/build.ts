@@ -107,6 +107,11 @@ export default class BuildCommand extends Command {
             if (contributors.length > 0) {
                 xml.setOrAdd('modDesc/contributors', contributors.join(", "));
             }
+
+            if (isConsole) {
+                this.project.get('console.del_moddesc', [])
+                    .forEach((del: string) => xml.remove(del));
+            }
         });
     }
 
