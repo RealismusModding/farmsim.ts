@@ -28,6 +28,7 @@ export default class BuildCommand extends Command {
             .description('Build the mod')
             .option('-r, --release', 'Create a release build')
             .option('-u, --update', 'Create an update build')
+            .option('-c, --console', 'Create a console build')
             .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
@@ -39,15 +40,15 @@ export default class BuildCommand extends Command {
         this.project = project;
         this.config = BuildConfig.load();
 
-        return this.build(options.release || options.update, options.update)
+        return this.build(options.release || options.update, options.update, options.console)
     }
 
-    public async build(release: boolean, update: boolean): Promise<void> {
+    public async build(release: boolean, update: boolean, isConsole: boolean): Promise<void> {
         // Catch all issues to not end up with gigabytes of failed builds
         try {
             this.targetFolder = fs.mkdtempSync('.fsbuild-');
 
-            await this.generateModDesc();
+            await this.generateModDesc(isConsole);
 
             const sourcePath = this.project.get('code');
             if (sourcePath) {
@@ -55,7 +56,7 @@ export default class BuildCommand extends Command {
             }
 
             if (release) {
-logger.debug("Verify and clean translations");
+                logger.debug("Verify and clean translations");
             }
 
             // A mod requires an icon, copy it or fail.
@@ -74,6 +75,11 @@ logger.debug("Verify and clean translations");
             // Copy any resources referenced in the project
             await Promise.all(this.project.get('resources', []).map((p: string) => this.copyResource(p)));
 
+            // If console, remove any designated resources
+            if (isConsole) {
+                await this.removeUnwantedConsoleResources();
+            }
+
             const zipName = this.project.zipName(update);
             await this.createZipFile(zipName);
         } finally {
@@ -81,7 +87,7 @@ logger.debug("Verify and clean translations");
         }
     }
 
-    private async generateModDesc(): Promise<void> {
+    private async generateModDesc(isConsole: boolean): Promise<void> {
         const src = this.project.filePath('modDesc.xml');
         const dst = path.join(this.targetFolder, 'modDesc.xml');
 
@@ -211,6 +217,60 @@ logger.debug("Verify and clean translations");
 
             zip.end();
         });
+    }
+
+    /**
+     * Find all items in a directory that match given filter.
+     * @param  {string}     src Root
+     * @param  {string) =>  boolean}     filter Filter
+     * @return {string[]}            List
+     */
+    private dirContents(src: string, filter: (val: string) => boolean): any[] {
+        if (!fs.existsSync(src)) {
+            return [];
+        }
+
+        const files = fs.readdirSync(src);
+        return _.flatMap(files, file => {
+            const filename = path.join(src, file);
+            const stat = fs.lstatSync(filename);
+
+            if (stat.isDirectory()) {
+                const items = this.dirContents(filename, filter);
+
+                if (filter(filename)) {
+                    items.push({ name: filename, isDir: true });
+                }
+
+                return items;
+            } else if (filter(filename)) {
+                return { name: filename, isDir: false };
+            }
+
+            return [];
+        });
+    };
+
+    /**
+     * Remove skip_files for console builds.
+     */
+    private async removeUnwantedConsoleResources(): Promise<void> {
+        const files = this.project.get('console.skip_files', []);
+
+        // Find all items in the target that match
+        const items = this.dirContents(this.targetFolder, val => {
+            const subPath = path.relative(this.targetFolder, val);
+            return _.some(files, e => _.startsWith(subPath, e));
+        });
+
+        // Delete them
+       items.forEach(item => {
+           if (item.isDir) {
+               fs.rmdirSync(item.name);
+           } else {
+               fs.unlinkSync(item.name);
+           }
+       });
     }
 
     /**
