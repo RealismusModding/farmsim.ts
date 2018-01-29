@@ -8,13 +8,13 @@ Farming Simulator modding tool written in typescript
 
 ## Usage
 
-`fs init`
+In an existing (mod) folder run `fs init` or run `fs init <name>` to create a new mod. Make sure to fill in everything correctly.
 
-`fs build`
+For very basic mods, you can then run `fs build`, `fs install` and `fs run`.
 
-`fs install`
+For more complex mods, configure `farmsim.yml`.
 
-`fs run`
+## `farmsim.yml`
 
 
 
