@@ -31,11 +31,10 @@ export default class BuildCommand extends Command {
     }
 
     public async run(options: any) {
-        const project = await Project.load(this.program);
+        this.project = await Project.load(this.program);
 
-        logger.info("Building mod '" + project.get("name") + "'");
+        logger.info("Building mod '" + this.project.get("name") + "'");
 
-        this.project = project;
         this.config = BuildConfig.load();
 
         return this.build(options.release || options.update, options.update, options.console)
@@ -44,7 +43,7 @@ export default class BuildCommand extends Command {
     public async build(release: boolean, update: boolean, isConsole: boolean) {
         // Catch all issues to not end up with gigabytes of failed builds
         try {
-            this.targetFolder = fs.mkdtempSync('.fsbuild-');
+            this.targetFolder = fs.mkdtempSync(path.join(this.project.getFolder(), '.fsbuild-'));
 
             await this.generateModDesc(isConsole);
 
@@ -115,15 +114,7 @@ export default class BuildCommand extends Command {
 
     private async generateCode(sourcePath: string, release: boolean) {
         // Create the template values
-        let templates = this.project.get('templates', {});
-
-        if (release) {
-            // Override with release templates
-            templates = _.defaults(this.project.get('release.templates', {}), templates);
-        } else {
-            // Override with build config
-            templates = _.defaults(this.config.get('templates', {}), templates);
-        }
+        const templates = Utils.getTemplates(this.project, this.config, release);
 
         const readdir = util.promisify(fs.readdir);
         const copy = util.promisify(fs.copyFile);
@@ -214,7 +205,7 @@ export default class BuildCommand extends Command {
         // This has to be async
         return new Promise<void>((resolve, reject) => {
             zip.outputStream
-                .pipe(fs.createWriteStream(zipName))
+                .pipe(fs.createWriteStream(this.project.filePath(zipName)))
                 .on('close', resolve)
                 .on('error', reject);
 

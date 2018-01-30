@@ -127,6 +127,10 @@ export default class InitCommand extends Command {
 
             await this.createModDesc(templateObject);
         }
+
+        if (this.answers.translations) {
+            await this.ensureFolder('translations');
+        }
     }
 
     private async createFarmSim(template: Template | null) {

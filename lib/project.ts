@@ -21,12 +21,8 @@ export default class Project {
 
     public static async load(program: commander.CommanderStatic): Promise<Project> {
         // Find current project file
-        let file = program.file;
+        let file = Project.findProjectRoot(program.file);
         if (!file) {
-            file = "./farmsim.yml";
-        }
-
-        if (!fs.existsSync(file)) {
             throw "Could not find project file '" + file + "'";
         }
 
@@ -39,6 +35,35 @@ export default class Project {
         }
 
         return project;
+    }
+
+    private static findProjectRoot(suggested?: string): string | null {
+        if (suggested) {
+             const p = path.resolve(suggested);
+
+             if (!fs.existsSync(p)) {
+                 throw 'Project at given path does not exist';
+             }
+
+             return p;
+        }
+
+        // Look in current dir, and then up
+        let root = process.cwd();
+        do {
+            let p = path.join(root, 'farmsim.yml')
+            if (fs.existsSync(p)) {
+                return p;
+            }
+
+            let newRoot = path.dirname(root);
+            if (newRoot === root) {
+                break;
+            }
+            root = newRoot;
+        } while (root !== '/')
+
+        return null;
     }
 
     public get(path: string, defaultValue?: any): any | null {
@@ -57,6 +82,10 @@ export default class Project {
      */
     public filePath(p: string): string {
         return path.join(path.dirname(this.path), p);
+    }
+
+    public getFolder(): string {
+        return path.dirname(this.path);
     }
 
     public zipName(update?: boolean): string {

@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "chalk": "^2.3.0",
     "clui": "^0.3.6",
     "commander": "^2.13.0",
     "fs-extra": "^5.0.0",

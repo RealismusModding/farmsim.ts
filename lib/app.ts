@@ -10,8 +10,7 @@ import RunCommand from './commands/run';
 import LogCommand from './commands/log';
 import UninstallCommand from './commands/uninstall';
 import VerifyCommand from './commands/verify';
-
-import DebugCommand from './commands/debug';
+import InfoCommand from './commands/info';
 
 export class App {
     private program: commander.CommanderStatic;
@@ -31,7 +30,7 @@ export class App {
             new LogCommand(this),
             new UninstallCommand(this),
             new VerifyCommand(this),
-            new DebugCommand(this),
+            new InfoCommand(this),
         ];
     }
 
