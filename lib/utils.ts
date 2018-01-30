@@ -27,4 +27,8 @@ export default class Utils {
     public static removeFolder(dir: string): Promise<void> {
         return fs.remove(dir);
     }
+
+    public static getLatestDescVer() {
+        return 38;
+    }
 }

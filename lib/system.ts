@@ -141,4 +141,12 @@ export default class System {
             default: return 'xdg-open';
         }
     }
+
+    public static getUser(): string | null {
+        if (System.isWindows()) {
+            return process.env['USERNAME'] || null;
+        } else {
+            return process.env['USER'] || null;
+        }
+    }
 }

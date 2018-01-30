@@ -16,8 +16,6 @@ import * as replaceStream from 'replacestream';
 import * as xmlpoke from 'xmlpoke';
 
 export default class BuildCommand extends Command {
-    private static LATEST_MODDESC_VER: number = 38;
-
     private targetFolder: string;
     public project: Project;
     public config: BuildConfig;
@@ -32,7 +30,7 @@ export default class BuildCommand extends Command {
             .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public async run(options: any): Promise<void> {
+    public async run(options: any) {
         const project = await Project.load(this.program);
 
         logger.info("Building mod '" + project.get("name") + "'");
@@ -43,7 +41,7 @@ export default class BuildCommand extends Command {
         return this.build(options.release || options.update, options.update, options.console)
     }
 
-    public async build(release: boolean, update: boolean, isConsole: boolean): Promise<void> {
+    public async build(release: boolean, update: boolean, isConsole: boolean) {
         // Catch all issues to not end up with gigabytes of failed builds
         try {
             this.targetFolder = fs.mkdtempSync('.fsbuild-');
@@ -87,7 +85,7 @@ export default class BuildCommand extends Command {
         }
     }
 
-    private async generateModDesc(isConsole: boolean): Promise<void> {
+    private async generateModDesc(isConsole: boolean) {
         const src = this.project.filePath('modDesc.xml');
         const dst = path.join(this.targetFolder, 'modDesc.xml');
 
@@ -98,7 +96,7 @@ export default class BuildCommand extends Command {
 
         // Modify destination
         xmlpoke(dst, xml => {
-            xml.setOrAdd('modDesc/@descVersion', BuildCommand.LATEST_MODDESC_VER);
+            xml.setOrAdd('modDesc/@descVersion', Utils.getLatestDescVer());
             xml.setOrAdd('modDesc/version', this.project.get('version', '0.0.0.0'));
 
             xml.setOrAdd('modDesc/author', this.project.get('author', _.get(modDesc, 'modDesc.author.0')));
@@ -115,7 +113,7 @@ export default class BuildCommand extends Command {
         });
     }
 
-    private async generateCode(sourcePath: string, release: boolean): Promise<void> {
+    private async generateCode(sourcePath: string, release: boolean) {
         // Create the template values
         let templates = this.project.get('templates', {});
 
@@ -132,7 +130,7 @@ export default class BuildCommand extends Command {
         const stat = util.promisify(fs.stat);
         const mkdir = util.promisify(fs.mkdir);
 
-        const folder = async (src: string, dst: string): Promise<void> => {
+        const folder = async (src: string, dst: string): Promise<any> => {
             const items = await readdir(src);
 
             return Promise.all(items.map(async (item) => {
@@ -179,7 +177,7 @@ export default class BuildCommand extends Command {
      * @param  {string}        sourcePath path
      * @return {Promise<void>}
      */
-    private async copyResource(sourcePath: string): Promise<void> {
+    private async copyResource(sourcePath: string) {
         return Utils.copy(this.project.filePath(sourcePath), path.join(this.targetFolder, sourcePath));
     }
 
@@ -188,7 +186,7 @@ export default class BuildCommand extends Command {
      * @param  {boolean}       update Is an update
      * @return {Promise<void>}
      */
-    private async createZipFile(zipName: string): Promise<void> {
+    private async createZipFile(zipName: string) {
         if (!this.targetFolder) {
             return;
         }
@@ -259,7 +257,7 @@ export default class BuildCommand extends Command {
     /**
      * Remove skip_files for console builds.
      */
-    private async removeUnwantedConsoleResources(): Promise<void> {
+    private async removeUnwantedConsoleResources() {
         const files = this.project.get('console.skip_files', []);
 
         // Find all items in the target that match
@@ -281,7 +279,7 @@ export default class BuildCommand extends Command {
     /**
      * Clean up the build, especially in case of failure.
      */
-    private async cleanUp(): Promise<void> {
+    private async cleanUp() {
         if (fs.existsSync(this.targetFolder)) {
             logger.debug("Removing build folder");
             return Utils.removeFolder(this.targetFolder);
@@ -319,7 +317,7 @@ export default class BuildCommand extends Command {
      * @param  {any}     data Object
      * @return {boolean}      true on success, false on failure
      */
-    private async writeXML(path: string, data: any): Promise<void> {
+    private async writeXML(path: string, data: any) {
         let builder = new xml2js.Builder({
             cdata: true,
             renderOpts: {
