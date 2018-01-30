@@ -1,6 +1,6 @@
 {
   "name": "farmsim",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Mod build and helper tool for Farming Simulator",
   "main": "bin/fs",
   "scripts": {
