@@ -29,7 +29,6 @@
   "engines": {
     "node": ">=8"
   },
-  "engineStrict" : true,
   "homepage": "https://github.com/RealismusModding/farmsim.ts#readme",
   "devDependencies": {
     "@types/bluebird": "^3.5.19",
