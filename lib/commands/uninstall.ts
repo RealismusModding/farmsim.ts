@@ -23,12 +23,10 @@ export default class UninstallCommand extends Command {
     }
 
     public async run(options: any): Promise<void> {
-        const project = await Project.load(this.program);
-
-        logger.info("Removing mod '" + project.get("name") + "' from mods folder");
-
-        this.project = project;
+        this.project = await Project.load(this.program);
         this.config = BuildConfig.load();
+
+        logger.info("Removing mod '" + this.project.get("name") + "' from mods folder");
 
         return this.uninstall(options.force);
     }
