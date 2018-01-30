@@ -93,7 +93,7 @@ export default class RunCommand extends Command {
                 .on('error', logger.error);
         } else {
             program = path;
-            args = extraArgs;
+            args = extraArgs || [];
 
             child_process.execFile(path, args);
         }
