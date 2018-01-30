@@ -93,7 +93,9 @@ export default class RunCommand extends Command {
 
         args = args.concat(extraArgs || []);
 
-        child_process.spawn(program, args);
+        logger.debug("Spawn using", program, args);
+        child_process.spawn(program, args)
+            .on('error', logger.error);
     }
 
     private writeXML(path: string, data: any): boolean {
