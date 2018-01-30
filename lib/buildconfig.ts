@@ -1,12 +1,11 @@
+import System from './system';
+
 import * as commander from 'commander';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
-
-import System from './system';
-
-let gBuildConfig: BuildConfig | null = null;
+import * as logger from 'winston';
 
 export default class BuildConfig {
     private data: any;
@@ -20,10 +19,6 @@ export default class BuildConfig {
     }
 
     public static load(): BuildConfig {
-        if (gBuildConfig) {
-            return gBuildConfig;
-        }
-
         const fileName = ".fsbuild.yml";
         let dirs = [];
 
@@ -57,13 +52,11 @@ export default class BuildConfig {
 
                 data = _.defaultsDeep(fileData, data);
             } catch (e) {
-                console.error("Failed to load config file '" + filePath + "':", e.message);
+                logger.error("Failed to load config file '" + filePath + "':", e.message);
             }
         });
 
-        gBuildConfig = new BuildConfig(data);
-
-        return gBuildConfig;
+        return new BuildConfig(data);
     }
 
     public get(path: string, defaultValue?: any): any | null {
@@ -72,5 +65,9 @@ export default class BuildConfig {
 
     public has(path: string): boolean {
         return _.has(this.data, path);
+    }
+
+    public set(path: string, value: any) {
+        _.set(this.data, path, value);
     }
 }

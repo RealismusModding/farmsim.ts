@@ -11,6 +11,7 @@ import LogCommand from './commands/log';
 import UninstallCommand from './commands/uninstall';
 import VerifyCommand from './commands/verify';
 import InfoCommand from './commands/info';
+import ConfigCommand from './commands/config';
 
 export class App {
     private program: commander.CommanderStatic;
@@ -31,6 +32,7 @@ export class App {
             new UninstallCommand(this),
             new VerifyCommand(this),
             new InfoCommand(this),
+            new ConfigCommand(this),
         ];
     }
 

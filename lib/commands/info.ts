@@ -18,7 +18,7 @@ export default class InfoCommand extends Command {
             .action(Utils.commandRunnerWithErrors(this.run, this));
     }
 
-    public async run(options: any): Promise<void> {
+    public async run(options: any) {
         let project = await Project.load(this.program);
         const config = BuildConfig.load();
 
