@@ -49,7 +49,7 @@ export default class BuildCommand extends Command {
 
             const sourcePath = this.project.get('code');
             if (sourcePath) {
-                await this.generateCode(this.project.filePath(sourcePath), release);
+                await this.generateCode(sourcePath, release);
             }
 
             if (release) {
@@ -112,7 +112,7 @@ export default class BuildCommand extends Command {
         });
     }
 
-    private async generateCode(sourcePath: string, release: boolean) {
+    private async generateCode(subpath: string, release: boolean) {
         // Create the template values
         const templates = Utils.getTemplates(this.project, this.config, release);
 
@@ -157,9 +157,9 @@ export default class BuildCommand extends Command {
             })).then(() => {});
         };
 
-        const target = path.join(this.targetFolder, sourcePath);
-        return util.promisify(fs.mkdir)(target)
-            .then(() => folder(sourcePath, target));
+        const target = path.join(this.targetFolder, subpath);
+
+        return mkdir(target).then(() => folder(this.project.filePath(subpath), target));
     }
 
     /**
