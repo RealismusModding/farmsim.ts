@@ -51,10 +51,10 @@ export default class InstallCommand extends Command {
         // Copy the file
         const zipName = this.project.zipName();
 
-        return util.promisify(fs.copyFile)(zipName, path.join(modsFolder, zipName));
+        return util.promisify(fs.copyFile)(this.project.filePath(zipName), path.join(modsFolder, zipName));
     }
 
     private isBuilt(): boolean {
-        return fs.existsSync(this.project.zipName());
+        return fs.existsSync(this.project.filePath(this.project.zipName()));
     }
 }
