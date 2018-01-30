@@ -83,7 +83,7 @@ export default class RunCommand extends Command {
         let args: string[] = [];
         let program: string;
 
-        if (System.isMacOS) {
+        if (System.isMacOS()) {
             program = 'open';
             args = [ '-a', path ];
         } else {
