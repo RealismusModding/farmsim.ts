@@ -89,6 +89,10 @@ export default class VerifyCommand extends Command {
         }
 
         logger.info("Ran " + totalChecks + " verifications. " + totalFailures + " failed, with " + totalErrors + " errors.");
+
+        if (totalFailures > 0) {
+            process.exitCode = 1;
+        }
     }
 
     private findPaths(root: string, extension: string): string[] {
