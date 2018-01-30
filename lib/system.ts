@@ -137,7 +137,7 @@ export default class System {
     public static getCommandLine(): string {
         switch (process.platform) {
             case 'darwin': return 'open';
-            case 'win32': return 'start';
+            case 'win32': return 'star ""';
             default: return 'xdg-open';
         }
     }
