@@ -86,16 +86,17 @@ export default class RunCommand extends Command {
         if (System.isMacOS()) {
             program = 'open';
             args = [ '-a', path ];
+
+            args = args.concat(extraArgs || []);
+
+            child_process.spawn(program, args)
+                .on('error', logger.error);
         } else {
-            program = 'start';
-            args = [ '"FS"', '"' + path + '"' ];
+            program = path;
+            args = extraArgs;
+
+            child_process.execFile(path, args);
         }
-
-        args = args.concat(extraArgs || []);
-
-        logger.debug("Spawn using", program, args);
-        child_process.spawn(program, args)
-            .on('error', logger.error);
     }
 
     private writeXML(path: string, data: any): boolean {
