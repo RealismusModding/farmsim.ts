@@ -88,7 +88,7 @@ export default class RunCommand extends Command {
             args = [ '-a', path ];
         } else {
             program = 'start';
-            args = [ path ];
+            args = [ '""', '"' + path + '"' ];
         }
 
         args = args.concat(extraArgs || []);
