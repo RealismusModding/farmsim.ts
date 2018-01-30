@@ -272,7 +272,6 @@ export default class BuildCommand extends Command {
      */
     private async cleanUp() {
         if (fs.existsSync(this.targetFolder)) {
-            logger.debug("Removing build folder");
             return Utils.removeFolder(this.targetFolder);
         }
     }
