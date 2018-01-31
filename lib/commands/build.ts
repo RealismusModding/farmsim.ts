@@ -77,7 +77,7 @@ export default class BuildCommand extends Command {
                 await this.removeUnwantedConsoleResources();
             }
 
-            const zipName = this.project.zipName(update);
+            const zipName = this.project.zipName(update, isConsole);
             await this.createZipFile(zipName);
         } finally {
             await this.cleanUp();

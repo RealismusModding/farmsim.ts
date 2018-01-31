@@ -88,10 +88,15 @@ export default class Project {
         return path.dirname(this.path);
     }
 
-    public zipName(update?: boolean): string {
+    public zipName(update?: boolean, isConsole?: boolean): string {
         update = update || false;
+        isConsole = isConsole || false;
 
         let zipName = this.get('zip_name', this.get('name'));
+
+        if (isConsole) {
+            zipName += '_console';
+        }
 
         if (update) {
             zipName += '_update';
