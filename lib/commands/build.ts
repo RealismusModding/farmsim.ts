@@ -57,9 +57,10 @@ export default class BuildCommand extends Command {
             }
 
             // A mod requires an icon, copy it or fail.
-            const iconPath = this.project.filePath('icon.dds');
+            const iconName = this.project.get("iconFilename", "icon.dds");
+            const iconPath = this.project.filePath(iconName);
             if (fs.existsSync(iconPath)) {
-                await this.copyResource('icon.dds');
+                await this.copyResource(iconName);
             } else {
                 throw 'Icon DDS is missing. Create an icon to continue the build.';
             }
@@ -154,7 +155,8 @@ export default class BuildCommand extends Command {
                     // Recursively handle the folder
                     return folder(itemSrc, itemDst);
                 }
-            })).then(() => {});
+            })).then(() => {
+            });
         };
 
         const target = path.join(this.targetFolder, subpath);
@@ -233,12 +235,12 @@ export default class BuildCommand extends Command {
                 const items = this.dirContents(filename, filter);
 
                 if (filter(filename)) {
-                    items.push({ name: filename, isDir: true });
+                    items.push({name: filename, isDir: true});
                 }
 
                 return items;
             } else if (filter(filename)) {
-                return { name: filename, isDir: false };
+                return {name: filename, isDir: false};
             }
 
             return [];
@@ -258,13 +260,13 @@ export default class BuildCommand extends Command {
         });
 
         // Delete them
-       items.forEach(item => {
-           if (item.isDir) {
-               fs.rmdirSync(item.name);
-           } else {
-               fs.unlinkSync(item.name);
-           }
-       });
+        items.forEach(item => {
+            if (item.isDir) {
+                fs.rmdirSync(item.name);
+            } else {
+                fs.unlinkSync(item.name);
+            }
+        });
     }
 
     /**
@@ -319,6 +321,6 @@ export default class BuildCommand extends Command {
         let xml = builder.buildObject(data);
 
         const writeFile = util.promisify(fs.writeFile);
-        return writeFile(path, xml, { encoding: 'utf8' });
+        return writeFile(path, xml, {encoding: 'utf8'});
     }
 }
