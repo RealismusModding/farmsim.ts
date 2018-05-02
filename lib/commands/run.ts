@@ -6,9 +6,7 @@ import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as xml2js from 'xml2js';
-import * as _ from 'lodash';
 import * as logger from 'winston';
-import * as util from 'util';
 
 export default class RunCommand extends Command {
 
@@ -24,12 +22,9 @@ export default class RunCommand extends Command {
     }
 
     public async run(options: any): Promise<void> {
-        const installation = System.getDefaultInstallationPath();
-        if (!installation) {
-            throw "No Farming Simulator installation found.";
-        }
+        const installation = await System.getDefaultInstallationPath();
 
-        logger.info(`Found installation at ${installation}.`)
+        logger.info(`Found installation at ${installation}.`);
 
         const type = System.getInstallationType(installation);
 
@@ -43,7 +38,7 @@ export default class RunCommand extends Command {
 
             let launchData = {
                 startup: {
-                    cmdline: [ 'FarmingSimulator2017Game -name FarmingSimulator2017 ' + args.join(' ') ]
+                    cmdline: ['FarmingSimulator2017Game -name FarmingSimulator2017 ' + args.join(' ')]
                 }
             };
             this.writeXML(launchXMLPath, launchData);
@@ -77,15 +72,14 @@ export default class RunCommand extends Command {
     }
 
     private launch(path: string, extraArgs?: string[]): void {
-        const options = {
-        };
+        const options = {};
 
         let args: string[] = [];
         let program: string;
 
         if (System.isMacOS()) {
             program = 'open';
-            args = [ '-a', path ];
+            args = ['-a', path];
 
             args = args.concat(extraArgs || []);
 
@@ -103,7 +97,7 @@ export default class RunCommand extends Command {
         let builder = new xml2js.Builder();
         let xml = builder.buildObject(data);
 
-        fs.writeFileSync(path, xml, { encoding: 'utf8' });
+        fs.writeFileSync(path, xml, {encoding: 'utf8'});
 
         return true;
     }

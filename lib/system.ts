@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import { exec } from 'child_process';
+import {exec, spawn} from 'child_process';
 
 import BuildConfig from './buildconfig';
 
@@ -63,14 +63,14 @@ export default class System {
      *
      * @return {string} path or null if no installation found
      */
-    public static getDefaultInstallationPath(): string | null {
-        const paths = System.getInstallationPaths();
+    public static async getDefaultInstallationPath(): Promise<string> {
+        const path = _.first(await System.getInstallationPaths());
 
-        if (paths.length > 0) {
-            return paths[0];
+        if (path) {
+            return Promise.resolve(path);
         }
 
-        return null;
+        return Promise.reject("No Farming Simulator installation found.");
     }
 
     /**
@@ -81,31 +81,75 @@ export default class System {
      *
      * @return {string[]} List of FS installation paths
      */
-    public static getInstallationPaths(): string[] {
+    public static async getInstallationPaths(): Promise<string[]> {
+        return this.getSystemPaths().then((paths: string[]) => {
+            // Add intallations
+            const config = BuildConfig.load();
+
+            paths = paths.concat(_.values(config.get('installations')));
+
+            return paths.filter((filePath) => fs.existsSync(filePath));
+        });
+    }
+
+    /**
+     * Get paths based on system type
+     *
+     * @return {string[]} paths
+     */
+    private static async getSystemPaths(): Promise<string[]> {
         let paths: string[] = [];
 
         if (System.isMacOS()) {
             // normal / app store
-            paths.push(`/Applications/${System.gameName}.app`)
-
+            paths.push(`/Applications/${System.gameName}.app`);
             // Steam
-            paths.push(path.resolve(System.getUserDirectory(), `~/Library/Application Support/Steam/steamapps/common/${System.gameName}/${System.gameName}.app`))
+            paths.push(path.resolve(System.getUserDirectory(), `~/Library/Application Support/Steam/steamapps/common/${System.gameName}/${System.gameName}.app`));
         } else {
-            // normal
-            paths.push(`C://Program Files (x86)/${System.gameName}/${System.gameFolder}.exe`)
-            paths.push(`C://Program Files/${System.gameName}/${System.gameFolder}.exe`)
-
-            // steam
-            paths.push(`C:/Program Files (x86)/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`)
-            paths.push(`C:/Program Files/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`)
+            await System.getWindowsAvailableDisks().then(disks => {
+                // Note: windows users tend to move there "games" to other disks ..
+                for (let disk of disks) {
+                    // normal
+                    paths.push(`${disk}//Program Files (x86)/${System.gameName}/${System.gameFolder}.exe`);
+                    paths.push(`${disk}//Program Files/${System.gameName}/${System.gameFolder}.exe`);
+                    // steam
+                    paths.push(`${disk}/Program Files (x86)/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`);
+                    paths.push(`${disk}/Program Files/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`);
+                }
+            })
         }
 
-        // Add intallations
-        const config = BuildConfig.load();
+        return Promise.resolve(paths);
+    }
 
-        paths = paths.concat(_.values(config.get('installations')));
+    /**
+     * Get available disks on Windows
+     *
+     * @return {string[]} disks
+     */
+    private static async getWindowsAvailableDisks(): Promise<string[]> {
+        const cmd = spawn("cmd");
 
-        return paths.filter((filePath) => fs.existsSync(filePath));
+        return new Promise<string[]>((resolve, reject) => {
+            cmd.stdout.on("data", function (chunk: any) {
+                // cast it to string
+                const output = String(chunk);
+                const data = output.split("\r\n").map(_.trim).filter(e => e != "" && e.length <= 2);
+
+                if (data.length != 0) {
+                    resolve(data);
+                }
+            });
+
+            cmd.on("exit", function (code: number) {
+                if (code !== 0) {
+                    reject(code);
+                }
+            });
+
+            cmd.stdin.write("wmic logicaldisk get name\n");
+            cmd.stdin.end();
+        })
     }
 
     public static getInstallationType(path: string): string {
@@ -136,17 +180,20 @@ export default class System {
 
     public static getCommandLine(): string {
         switch (process.platform) {
-            case 'darwin': return 'open';
-            case 'win32': return 'start ""';
-            default: return 'xdg-open';
+            case 'darwin':
+                return 'open';
+            case 'win32':
+                return 'start ""';
+            default:
+                return 'xdg-open';
         }
     }
 
     public static getUser(): string | null {
         if (System.isWindows()) {
             return process.env['USERNAME'] || null;
-        } else {
-            return process.env['USER'] || null;
         }
+
+        return process.env['USER'] || null;
     }
 }

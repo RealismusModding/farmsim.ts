@@ -5,7 +5,6 @@ import System from '../system';
 import BuildConfig from '../buildconfig';
 
 import * as path from 'path';
-import * as logger from 'winston';
 import * as _ from 'lodash';
 import chalk from 'chalk';
 
@@ -52,7 +51,12 @@ export default class InfoCommand extends Command {
 
         nl();
         title('system info');
-        value('Game paths', System.getInstallationPaths().join('; '));
+
+        await System.getInstallationPaths().then((data: string[]) => {
+                value('Game paths', data.join('; '));
+            }
+        );
+
         value('User path', System.getUserDirectory());
         value('Game user path', System.getGameUserDirectory());
         value('Platform', System.isWindows() ? 'Windows' : System.isMacOS() ? 'Mac' : 'Other');
