@@ -7,8 +7,8 @@ import {exec, spawn} from 'child_process';
 import BuildConfig from './buildconfig';
 
 export default class System {
-    private static gameFolder: string = "FarmingSimulator2017";
-    private static gameName: string = "Farming Simulator 2017";
+    private static gameName: string = "FarmingSimulator2019";
+    private static gameFolder: string = "Farming Simulator 2019";
 
     /**
      * Get user directory full path
@@ -29,15 +29,15 @@ export default class System {
         let relative = '';
 
         if (System.isMacOS()) {
-            relative = "Library/Containers/com.astragon.farmingsim17/Data/Library/Application Support/" + System.gameFolder
+            relative = "Library/Containers/com.astragon.farmingsim19/Data/Library/Application Support/" + System.gameName;
             if (!fs.existsSync(path.resolve(user, relative))) {
-                relative = "Library/Application Support/" + System.gameFolder;
+                relative = "Library/Application Support/" + System.gameName;
             }
         } else {
-            relative = "Documents/My Games/" + System.gameFolder
+            relative = "Documents/My Games/" + System.gameName;
         }
 
-        return path.normalize(path.resolve(user, relative)); //.replace(/ /g, '\\ ');
+        return path.normalize(path.resolve(user, relative));
     }
 
     /**
@@ -110,11 +110,11 @@ export default class System {
                 // Note: windows users tend to move there "games" to other disks ..
                 for (let disk of disks) {
                     // normal
-                    paths.push(`${disk}//Program Files (x86)/${System.gameName}/${System.gameFolder}.exe`);
-                    paths.push(`${disk}//Program Files/${System.gameName}/${System.gameFolder}.exe`);
+                    paths.push(`${disk}//Program Files (x86)/${System.gameFolder}/${System.gameName}.exe`);
+                    paths.push(`${disk}//Program Files/${System.gameFolder}/${System.gameName}.exe`);
                     // steam
-                    paths.push(`${disk}/Program Files (x86)/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`);
-                    paths.push(`${disk}/Program Files/Steam/steamapps/common/${System.gameName}/${System.gameFolder}.exe`);
+                    paths.push(`${disk}/Program Files (x86)/Steam/steamapps/common/${System.gameFolder}/${System.gameName}.exe`);
+                    paths.push(`${disk}/Program Files/Steam/steamapps/common/${System.gameFolder}/${System.gameName}.exe`);
                 }
             })
         }

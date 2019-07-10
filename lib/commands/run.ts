@@ -38,7 +38,7 @@ export default class RunCommand extends Command {
 
             let launchData = {
                 startup: {
-                    cmdline: ['FarmingSimulator2017Game -name FarmingSimulator2017 ' + args.join(' ')]
+                    cmdline: ['FarmingSimulator2019Game -name FarmingSimulator2019 ' + args.join(' ')]
                 }
             };
             this.writeXML(launchXMLPath, launchData);
