@@ -33,7 +33,7 @@ export default class Utils {
     }
 
     public static getLatestDescVer() {
-        return 38;
+        return 44;
     }
 
     public static getTemplates(project: Project, config: BuildConfig, release?: boolean): any {
